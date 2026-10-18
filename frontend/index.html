@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PulseOps — AI Incident Commander</title>
+  <meta name="description" content="PulseOps uses Strands Decider 2B to make typed diagnostic decisions during production incidents, powered by Amazon Bedrock for generative assessment."/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <h1>PulseOps</h1>
+        <p>AI Incident Commander · Strands Decider 2B</p>
+      </div>
+    </div>
+    <div class="tags">
+      <span class="tag tag-blue">#tool-selection</span>
+      <span class="tag tag-purple">#strands-decider-2b</span>
+    </div>
+  </header>
+
+  <!-- Decider status bar -->
+  <div class="status-bar" id="status-bar">
+    <div class="status-dot pending" id="status-dot"></div>
+    <span class="status-text" id="status-text">Checking Strands Decider server…</span>
+  </div>
+
+  <!-- Error banner -->
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- Incident selector -->
+  <section class="incident-selector">
+    <h2>Select Incident</h2>
+    <div class="incident-grid" id="incident-grid">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- Run button -->
+  <div class="run-section">
+    <button id="run-btn" disabled>
+      <span class="btn-spinner"></span>
+      <span class="btn-label">Run Incident Analysis</span>
+    </button>
+  </div>
+
+  <!-- Progress steps -->
+  <div class="progress-steps" id="progress-steps">
+    <div class="step pending" id="step-decider">
+      <div class="step-dot"></div>
+      <span>Asking Strands Decider 2B for typed action choice…</span>
+    </div>
+    <div class="step pending" id="step-tool">
+      <div class="step-dot"></div>
+      <span>Routing to diagnostic tool and collecting evidence…</span>
+    </div>
+    <div class="step pending" id="step-bedrock">
+      <div class="step-dot"></div>
+      <span>Generating incident assessment via Amazon Bedrock…</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <div class="results-grid">
+
+      <!-- Decision card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🎯</span>
+          <span class="card-title-text">Decider 2B — Action Selection</span>
+        </div>
+        <div class="card-body">
+          <div class="decision-action">
+            <span>⚡</span>
+            <span class="action-name" id="action-name">—</span>
+          </div>
+          <div class="decision-conf" id="decision-conf"></div>
+          <div class="prob-bars" id="prob-bars"></div>
+          <div class="latency-badge" id="latency-badge"></div>
+        </div>
+      </div>
+
+      <!-- Incident summary card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🚨</span>
+          <span class="card-title-text">Incident</span>
+        </div>
+        <div class="card-body" id="incident-summary"></div>
+      </div>
+
+      <!-- Evidence card (full width) -->
+      <div class="card evidence-card">
+        <div class="card-header">
+          <span class="card-icon">🔬</span>
+          <span class="card-title-text">Diagnostic Evidence</span>
+        </div>
+        <div class="card-body">
+          <div class="simulated-badge">⚠ SIMULATED DATA — for demonstration only</div>
+          <div class="evidence-text" id="evidence-text"></div>
+          <div class="key-finding" id="key-finding"></div>
+        </div>
+      </div>
+
+      <!-- Assessment card (full width) -->
+      <div class="card assessment-card">
+        <div class="card-header">
+          <span class="card-icon">🤖</span>
+          <span class="card-title-text">Bedrock Assessment</span>
+        </div>
+        <div class="card-body">
+          <div class="model-badge" id="model-badge"></div>
+          <div class="assessment-text" id="assessment-text"></div>
+        </div>
+      </div>
+
+    </div><!-- .results-grid -->
+  </div><!-- #results -->
+
+  <footer>
+    <p>
+      PulseOps · Strands Decider 2B Hackathon ·
+      <a href="https://github.com/strands-ai/strands-decider" target="_blank">strands-decider</a> ·
+      Apache-2.0
+    </p>
+  </footer>
+
+</div><!-- .wrapper -->
+<script src="app.js"></script>
+</body>
+</html>
