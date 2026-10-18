@@ -198,6 +198,86 @@ class TestBedrockRuntimeError(unittest.TestCase):
         self.assertEqual(r["provider"], "bedrock")
 
 
+class TestBedrockErrorClassification(unittest.TestCase):
+    """Verify distinct error categories, fail-fast behavior, and secret sanitization."""
+
+    def _mock_strands_with_error(self, exc):
+        mock_agent = MagicMock(side_effect=exc)
+        mock_strands = MagicMock()
+        mock_strands.Agent = MagicMock(return_value=mock_agent)
+        return mock_strands
+
+    def test_missing_credentials_categorization(self):
+        class NoCredentialsError(Exception):
+            pass
+        fake = self._mock_strands_with_error(NoCredentialsError("Unable to locate credentials"))
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": fake}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertEqual(r["status"], "unavailable")
+        self.assertEqual(r["error_category"], "missing_credentials")
+        self.assertIn("MISSING CREDENTIALS", r["label"])
+        self.assertIn("AWS credentials not found", r["assessment"])
+
+    def test_access_denied_categorization(self):
+        fake = self._mock_strands_with_error(Exception("AccessDeniedException: not authorized to perform bedrock:InvokeModel"))
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": fake}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertEqual(r["status"], "unavailable")
+        self.assertEqual(r["error_category"], "access_denied")
+        self.assertIn("ACCESS DENIED", r["label"])
+
+    def test_throttling_categorization_and_fail_fast(self):
+        fake = self._mock_strands_with_error(Exception("ThrottlingException: Rate exceeded (tokens per day quota)"))
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": fake}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertEqual(r["status"], "unavailable")
+        self.assertEqual(r["error_category"], "throttling")
+        self.assertIn("THROTTLED", r["label"])
+        self.assertIn("Failing fast without retrying", r["assessment"])
+
+    def test_network_timeout_categorization(self):
+        class ConnectTimeoutError(Exception):
+            pass
+        fake = self._mock_strands_with_error(ConnectTimeoutError("EndpointConnectionError: timed out"))
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": fake}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertEqual(r["status"], "unavailable")
+        self.assertEqual(r["error_category"], "timeout")
+        self.assertIn("TIMEOUT", r["label"])
+
+    def test_import_error_category(self):
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": None}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertEqual(r["status"], "unavailable")
+        self.assertEqual(r["error_category"], "import_error")
+        self.assertIn("SDK MISSING", r["label"])
+
+    def test_generic_service_error_categorization(self):
+        fake = self._mock_strands_with_error(Exception("ValidationException: Model ID is invalid"))
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": fake}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertEqual(r["status"], "unavailable")
+        self.assertEqual(r["error_category"], "service_error")
+        self.assertIn("SERVICE ERROR", r["label"])
+
+    def test_secret_sanitization(self):
+        leak_msg = "Error with aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY and key AKIAIOSFODNN7EXAMPLE"
+        fake = self._mock_strands_with_error(Exception(leak_msg))
+        with patch.dict(os.environ, {"ASSESSMENT_PROVIDER": "bedrock"}), \
+             patch.dict("sys.modules", {"strands": fake}):
+            r = ba.assess_incident(BASE_INCIDENT, _ACTION, _EVIDENCE)
+        self.assertNotIn("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", r["assessment"])
+        self.assertNotIn("AKIAIOSFODNN7EXAMPLE", r["assessment"])
+        self.assertIn("AKIA***", r["assessment"])
+
+
+
 # ---------------------------------------------------------------------------
 # 5. Bedrock provider — successful response (mocked Agent)
 # ---------------------------------------------------------------------------
