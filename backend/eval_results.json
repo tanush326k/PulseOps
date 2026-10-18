@@ -1,0 +1,490 @@
+{
+  "total_cases": 20,
+  "correct_count": 13,
+  "accuracy": 0.65,
+  "raw_correct_count": 13,
+  "raw_accuracy": 0.65,
+  "confidence_threshold": 0.0,
+  "mean_confidence": 0.4365,
+  "mean_correct_confidence": 0.4656,
+  "mean_incorrect_confidence": 0.3823,
+  "fallback_count": 0,
+  "fallback_rate": 0.0,
+  "per_action": {
+    "ask_for_details": {
+      "action": "ask_for_details",
+      "support": 4,
+      "predicted_count": 2,
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6667
+    },
+    "check_dependencies": {
+      "action": "check_dependencies",
+      "support": 4,
+      "predicted_count": 2,
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6667
+    },
+    "compare_deployments": {
+      "action": "compare_deployments",
+      "support": 4,
+      "predicted_count": 2,
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6667
+    },
+    "inspect_logs": {
+      "action": "inspect_logs",
+      "support": 4,
+      "predicted_count": 9,
+      "true_positives": 4,
+      "false_positives": 5,
+      "false_negatives": 0,
+      "precision": 0.4444,
+      "recall": 1.0,
+      "f1": 0.6154
+    },
+    "query_metrics": {
+      "action": "query_metrics",
+      "support": 4,
+      "predicted_count": 5,
+      "true_positives": 3,
+      "false_positives": 2,
+      "false_negatives": 1,
+      "precision": 0.6,
+      "recall": 0.75,
+      "f1": 0.6667
+    }
+  },
+  "confusion_matrix": {
+    "ask_for_details": {
+      "ask_for_details": 2,
+      "check_dependencies": 0,
+      "compare_deployments": 0,
+      "inspect_logs": 2,
+      "query_metrics": 0
+    },
+    "check_dependencies": {
+      "ask_for_details": 0,
+      "check_dependencies": 2,
+      "compare_deployments": 0,
+      "inspect_logs": 1,
+      "query_metrics": 1
+    },
+    "compare_deployments": {
+      "ask_for_details": 0,
+      "check_dependencies": 0,
+      "compare_deployments": 2,
+      "inspect_logs": 1,
+      "query_metrics": 1
+    },
+    "inspect_logs": {
+      "ask_for_details": 0,
+      "check_dependencies": 0,
+      "compare_deployments": 0,
+      "inspect_logs": 4,
+      "query_metrics": 0
+    },
+    "query_metrics": {
+      "ask_for_details": 0,
+      "check_dependencies": 0,
+      "compare_deployments": 0,
+      "inspect_logs": 1,
+      "query_metrics": 3
+    }
+  },
+  "results": [
+    {
+      "id": "EVAL-001",
+      "title": "5xx error spike immediately following container image deployment",
+      "expected": "compare_deployments",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.3315,
+      "probabilities": {
+        "inspect_logs": 0.4652,
+        "query_metrics": 0.1372,
+        "compare_deployments": 0.3463,
+        "check_dependencies": 0.0344,
+        "ask_for_details": 0.017
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    },
+    {
+      "id": "EVAL-002",
+      "title": "Configuration drift causing nil pointer exceptions across pods",
+      "expected": "compare_deployments",
+      "predicted_raw": "compare_deployments",
+      "routed_action": "compare_deployments",
+      "confidence": 0.4314,
+      "probabilities": {
+        "inspect_logs": 0.4014,
+        "query_metrics": 0.0218,
+        "compare_deployments": 0.5451,
+        "check_dependencies": 0.0092,
+        "ask_for_details": 0.0224
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-003",
+      "title": "Canary deployment diverging from baseline traffic response",
+      "expected": "compare_deployments",
+      "predicted_raw": "compare_deployments",
+      "routed_action": "compare_deployments",
+      "confidence": 0.2117,
+      "probabilities": {
+        "inspect_logs": 0.3534,
+        "query_metrics": 0.2211,
+        "compare_deployments": 0.3694,
+        "check_dependencies": 0.0254,
+        "ask_for_details": 0.0308
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-004",
+      "title": "Subtle regression in worker throughput after replica count reduction",
+      "expected": "compare_deployments",
+      "predicted_raw": "query_metrics",
+      "routed_action": "query_metrics",
+      "confidence": 0.75,
+      "probabilities": {
+        "inspect_logs": 0.147,
+        "query_metrics": 0.8,
+        "compare_deployments": 0.0304,
+        "check_dependencies": 0.0065,
+        "ask_for_details": 0.0161
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    },
+    {
+      "id": "EVAL-005",
+      "title": "Unhandled runtime exception flood in payments processing route",
+      "expected": "inspect_logs",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.3821,
+      "probabilities": {
+        "inspect_logs": 0.5057,
+        "query_metrics": 0.3903,
+        "compare_deployments": 0.0731,
+        "check_dependencies": 0.0201,
+        "ask_for_details": 0.0108
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-006",
+      "title": "Database connection pool exhaustion and transaction aborts",
+      "expected": "inspect_logs",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.2779,
+      "probabilities": {
+        "inspect_logs": 0.4223,
+        "query_metrics": 0.3601,
+        "compare_deployments": 0.0562,
+        "check_dependencies": 0.0657,
+        "ask_for_details": 0.0957
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-007",
+      "title": "TLS certificate validation failures on internal gRPC channel",
+      "expected": "inspect_logs",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.3877,
+      "probabilities": {
+        "inspect_logs": 0.5102,
+        "query_metrics": 0.0612,
+        "compare_deployments": 0.1404,
+        "check_dependencies": 0.1578,
+        "ask_for_details": 0.1304
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-008",
+      "title": "Intermittent silent data parsing failures in ingestion worker",
+      "expected": "inspect_logs",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.4417,
+      "probabilities": {
+        "inspect_logs": 0.5534,
+        "query_metrics": 0.2698,
+        "compare_deployments": 0.0386,
+        "check_dependencies": 0.1013,
+        "ask_for_details": 0.0368
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-009",
+      "title": "Slow memory leak causing periodic OOMKilled restarts",
+      "expected": "query_metrics",
+      "predicted_raw": "query_metrics",
+      "routed_action": "query_metrics",
+      "confidence": 0.7061,
+      "probabilities": {
+        "inspect_logs": 0.1595,
+        "query_metrics": 0.7649,
+        "compare_deployments": 0.0262,
+        "check_dependencies": 0.0098,
+        "ask_for_details": 0.0396
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-010",
+      "title": "P99 latency degradation due to CPU throttling under burst traffic",
+      "expected": "query_metrics",
+      "predicted_raw": "query_metrics",
+      "routed_action": "query_metrics",
+      "confidence": 0.6232,
+      "probabilities": {
+        "inspect_logs": 0.2183,
+        "query_metrics": 0.6985,
+        "compare_deployments": 0.0234,
+        "check_dependencies": 0.0262,
+        "ask_for_details": 0.0336
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-011",
+      "title": "Redis cache eviction and hit-ratio collapse",
+      "expected": "query_metrics",
+      "predicted_raw": "query_metrics",
+      "routed_action": "query_metrics",
+      "confidence": 0.6092,
+      "probabilities": {
+        "inspect_logs": 0.2398,
+        "query_metrics": 0.6873,
+        "compare_deployments": 0.0219,
+        "check_dependencies": 0.0195,
+        "ask_for_details": 0.0314
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-012",
+      "title": "Network socket buffer exhaustion during flash promotion",
+      "expected": "query_metrics",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.4963,
+      "probabilities": {
+        "inspect_logs": 0.597,
+        "query_metrics": 0.255,
+        "compare_deployments": 0.0378,
+        "check_dependencies": 0.0383,
+        "ask_for_details": 0.0718
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    },
+    {
+      "id": "EVAL-013",
+      "title": "Downstream payment gateway returning 504 Gateway Timeout",
+      "expected": "check_dependencies",
+      "predicted_raw": "check_dependencies",
+      "routed_action": "check_dependencies",
+      "confidence": 0.573,
+      "probabilities": {
+        "inspect_logs": 0.1735,
+        "query_metrics": 0.1319,
+        "compare_deployments": 0.0107,
+        "check_dependencies": 0.6584,
+        "ask_for_details": 0.0255
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-014",
+      "title": "Shared Kafka cluster partition leader election causing producer backpressure",
+      "expected": "check_dependencies",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.2533,
+      "probabilities": {
+        "inspect_logs": 0.4026,
+        "query_metrics": 0.3754,
+        "compare_deployments": 0.0552,
+        "check_dependencies": 0.0724,
+        "ask_for_details": 0.0943
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    },
+    {
+      "id": "EVAL-015",
+      "title": "Cloud identity provider rate-limiting token verification requests",
+      "expected": "check_dependencies",
+      "predicted_raw": "query_metrics",
+      "routed_action": "query_metrics",
+      "confidence": 0.433,
+      "probabilities": {
+        "inspect_logs": 0.2441,
+        "query_metrics": 0.5464,
+        "compare_deployments": 0.0112,
+        "check_dependencies": 0.1033,
+        "ask_for_details": 0.095
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    },
+    {
+      "id": "EVAL-016",
+      "title": "Cascading timeout propagation from deep downstream recommendation service",
+      "expected": "check_dependencies",
+      "predicted_raw": "check_dependencies",
+      "routed_action": "check_dependencies",
+      "confidence": 0.4811,
+      "probabilities": {
+        "inspect_logs": 0.1667,
+        "query_metrics": 0.1716,
+        "compare_deployments": 0.018,
+        "check_dependencies": 0.5849,
+        "ask_for_details": 0.0588
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-017",
+      "title": "Vague customer support escalation: 'checkout feels sluggish'",
+      "expected": "ask_for_details",
+      "predicted_raw": "ask_for_details",
+      "routed_action": "ask_for_details",
+      "confidence": 0.5222,
+      "probabilities": {
+        "inspect_logs": 0.1992,
+        "query_metrics": 0.1141,
+        "compare_deployments": 0.0119,
+        "check_dependencies": 0.0571,
+        "ask_for_details": 0.6178
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-018",
+      "title": "Empty alert webhook missing payload headers and metric references",
+      "expected": "ask_for_details",
+      "predicted_raw": "ask_for_details",
+      "routed_action": "ask_for_details",
+      "confidence": 0.4056,
+      "probabilities": {
+        "inspect_logs": 0.3021,
+        "query_metrics": 0.054,
+        "compare_deployments": 0.023,
+        "check_dependencies": 0.0963,
+        "ask_for_details": 0.5245
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": true,
+      "raw_correct": true
+    },
+    {
+      "id": "EVAL-019",
+      "title": "Contradictory incident report claiming simultaneous network down and 100% throughput",
+      "expected": "ask_for_details",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.1726,
+      "probabilities": {
+        "inspect_logs": 0.3381,
+        "query_metrics": 0.2348,
+        "compare_deployments": 0.0186,
+        "check_dependencies": 0.1889,
+        "ask_for_details": 0.2197
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    },
+    {
+      "id": "EVAL-020",
+      "title": "Ambiguous multi-service degradation without clear attribution",
+      "expected": "ask_for_details",
+      "predicted_raw": "inspect_logs",
+      "routed_action": "inspect_logs",
+      "confidence": 0.2396,
+      "probabilities": {
+        "inspect_logs": 0.3917,
+        "query_metrics": 0.2512,
+        "compare_deployments": 0.0632,
+        "check_dependencies": 0.2305,
+        "ask_for_details": 0.0635
+      },
+      "fallback_applied": false,
+      "fallback_reason": null,
+      "correct": false,
+      "raw_correct": false
+    }
+  ],
+  "model_name": "strands-decider-2B-qwen3.5-v1-2610"
+}

@@ -37,6 +37,7 @@ from .decision import (
     TRIAGE_QUESTION,
     InvalidDecisionError,
     build_state,
+    resolve_decision,
     route,
 )
 
@@ -146,6 +147,9 @@ class DeciderResult(BaseModel):
     action: str
     probabilities: dict[str, float]
     confidence: float
+    raw_action: str | None = None
+    fallback_applied: bool = False
+    fallback_reason: str | None = None
     latency_ms: float | None = None
 
 
@@ -246,22 +250,19 @@ def create_app() -> FastAPI:
         t_decider_ms = (time.monotonic() - t_decider_start) * 1000
 
         answer = answers[QUESTION_KEY]
-        action = answer["choice"]
-        probabilities = answer["probabilities"]
-        confidence = answer["confidence"]
-
-        # Step 4: Validate and route
+        # Step 4: Validate and route (with low-confidence fallback handling)
         try:
-            tool_fn = route(action)
+            decision = resolve_decision(answer)
+            tool_fn = route(decision.action)
         except InvalidDecisionError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
         tool_result = tool_fn(incident)
 
-        # Step 5: Bedrock assessment
+        # Step 5: Incident assessment
         assessment = assess_incident(
             incident=incident,
-            action_taken=action,
+            action_taken=decision.action,
             evidence=tool_result["evidence"],
         )
 
@@ -270,9 +271,12 @@ def create_app() -> FastAPI:
         return RunIncidentResponse(
             incident=incident,
             decider=DeciderResult(
-                action=action,
-                probabilities=probabilities,
-                confidence=confidence,
+                action=decision.action,
+                raw_action=decision.raw_action,
+                confidence=decision.confidence,
+                probabilities=decision.probabilities,
+                fallback_applied=decision.fallback_applied,
+                fallback_reason=decision.fallback_reason,
                 latency_ms=round(t_decider_ms, 1),
             ),
             tool_result=tool_result,

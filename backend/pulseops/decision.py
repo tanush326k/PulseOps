@@ -1,4 +1,4 @@
-﻿"""Typed decision layer for PulseOps.
+"""Typed decision layer for PulseOps.
 
 Builds the Strands Decider choice question for incident triage, validates the
 returned action name, and routes to the correct diagnostic tool callable.
@@ -19,7 +19,10 @@ hard-coded tool names -- it reads the descriptions and picks the best fit.
 """
 from __future__ import annotations
 
-from typing import Any, Callable
+import math
+import os
+from dataclasses import dataclass
+from typing import Any, Callable, Mapping
 
 from .decider_client import Decider
 
@@ -51,9 +54,106 @@ TRIAGE_QUESTION: dict[str, Any] = Decider.choice(
 
 KNOWN_ACTIONS: frozenset[str] = frozenset(TRIAGE_OPTIONS)
 
+DEFAULT_CONFIDENCE_THRESHOLD: float = float(
+    os.environ.get("PULSEOPS_CONFIDENCE_THRESHOLD", "0.0")
+)
+FALLBACK_ACTION: str = "ask_for_details"
+
 
 class InvalidDecisionError(ValueError):
     """Raised when the model returns an action name not in KNOWN_ACTIONS."""
+
+
+@dataclass(frozen=True)
+class RoutedDecision:
+    """Represents a validated and threshold-checked decision."""
+
+    action: str
+    raw_action: str
+    confidence: float
+    probabilities: dict[str, float]
+    fallback_applied: bool
+    fallback_reason: str | None = None
+
+
+def resolve_decision(
+    answer: Mapping[str, Any],
+    threshold: float | None = None,
+    fallback_action: str = FALLBACK_ACTION,
+) -> RoutedDecision:
+    """Validate answer and apply conservative low-confidence fallback if needed.
+
+    Parameters
+    ----------
+    answer : Mapping[str, Any]
+        The dict returned by Decider for the triage question, containing
+        'choice', 'confidence', and 'probabilities'.
+    threshold : float | None
+        Minimum confidence required to route raw choice. Defaults to
+        PULSEOPS_CONFIDENCE_THRESHOLD (0.0).
+    fallback_action : str
+        Action to route when confidence is below threshold. Defaults to
+        'ask_for_details'.
+
+    Returns
+    -------
+    RoutedDecision
+        Validated decision with raw and final actions clearly distinguished.
+
+    Raises
+    ------
+    InvalidDecisionError
+        If raw choice or fallback_action is not in KNOWN_ACTIONS.
+    """
+    raw_choice = answer.get("choice")
+    if not isinstance(raw_choice, str) or raw_choice not in KNOWN_ACTIONS:
+        raise InvalidDecisionError(
+            f"Unknown action {raw_choice!r}. Valid actions: {sorted(KNOWN_ACTIONS)}"
+        )
+
+    if fallback_action not in KNOWN_ACTIONS:
+        raise InvalidDecisionError(
+            f"Invalid fallback action {fallback_action!r}. Valid actions: {sorted(KNOWN_ACTIONS)}"
+        )
+
+    # Validate confidence; missing/NaN/invalid is treated conservatively as 0.0
+    conf_raw = answer.get("confidence")
+    if conf_raw is None or not isinstance(conf_raw, (int, float)) or math.isnan(conf_raw):
+        confidence = 0.0
+    else:
+        confidence = float(max(0.0, min(1.0, float(conf_raw))))
+
+    # Validate probabilities
+    probs_raw = answer.get("probabilities")
+    if isinstance(probs_raw, dict):
+        probabilities = {
+            str(k): float(v)
+            for k, v in probs_raw.items()
+            if isinstance(v, (int, float)) and not math.isnan(v)
+        }
+    else:
+        probabilities = {}
+
+    target_threshold = threshold if threshold is not None else DEFAULT_CONFIDENCE_THRESHOLD
+    if target_threshold > 0.0 and confidence < target_threshold:
+        return RoutedDecision(
+            action=fallback_action,
+            raw_action=raw_choice,
+            confidence=confidence,
+            probabilities=probabilities,
+            fallback_applied=True,
+            fallback_reason=f"Confidence {confidence:.4f} is below safety threshold {target_threshold:.4f}",
+        )
+
+    return RoutedDecision(
+        action=raw_choice,
+        raw_action=raw_choice,
+        confidence=confidence,
+        probabilities=probabilities,
+        fallback_applied=False,
+        fallback_reason=None,
+    )
+
 
 
 # ---------------------------------------------------------------------------
