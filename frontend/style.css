@@ -1,4 +1,4 @@
-﻿/* PulseOps - AI Incident Commander
+/* PulseOps - AI Incident Commander
    Dark glassmorphism design with animated probability bars */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -257,6 +257,9 @@ header {
   color: var(--accent); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;
 }
 .model-badge.unavailable { color: var(--text-muted); border-color: var(--border); background: transparent; }
+.model-badge.mock        { color: var(--warning); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.07); }
+.model-badge.live        { color: var(--success); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
+.model-badge.error       { color: var(--danger);  border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.07); }
 .assessment-text {
   font-size: 0.88rem; line-height: 1.75; color: var(--text-primary);
   white-space: pre-wrap; word-break: break-word;

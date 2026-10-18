@@ -1,4 +1,4 @@
-﻿"""PulseOps FastAPI backend.
+"""PulseOps FastAPI backend.
 
 Endpoints
 ---------
@@ -197,6 +197,7 @@ def create_app() -> FastAPI:
             "decider": decider_status,
             "known_actions": sorted(KNOWN_ACTIONS),
             "demo_incidents": [i["id"] for i in DEMO_INCIDENTS],
+            "assessment_provider": os.environ.get("ASSESSMENT_PROVIDER", "mock"),
         }
 
     @app.get("/api/incidents")
@@ -213,7 +214,7 @@ def create_app() -> FastAPI:
           2. Build a state string for Strands Decider.
           3. Ask Decider for a typed action choice.
           4. Validate and route to the diagnostic tool.
-          5. Call Bedrock for an incident assessment.
+          5. Generate an incident assessment (provider controlled by ASSESSMENT_PROVIDER).
           6. Return the complete structured response.
         """
         t0 = time.monotonic()
