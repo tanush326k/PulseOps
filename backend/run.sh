@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # run.sh — start both the Strands Decider server and the PulseOps backend
 #
 # Usage:
@@ -12,16 +12,18 @@
 
 set -euo pipefail
 
-CHECKPOINT=${CHECKPOINT:-"StrandsAgents/strands-decider-2B-qwen3.5-v1-2610"}
-DECIDER_PORT=${DECIDER_PORT:-8099}
-PORT=${PORT:-8080}
-VENV=~/strands-decider/.venv
 BACKEND_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Load .env if present
 if [ -f "$BACKEND_DIR/../.env" ]; then
   set -a; source "$BACKEND_DIR/../.env"; set +a
 fi
+
+CHECKPOINT=${CHECKPOINT:-"StrandsAgents/strands-decider-2B-qwen3.5-v1-2610"}
+DECIDER_PORT=${DECIDER_PORT:-8099}
+PORT=${PORT:-8080}
+ASSESSMENT_PROVIDER=${ASSESSMENT_PROVIDER:-"mock"}
+VENV=~/strands-decider/.venv
 
 echo "===================================================="
 echo " PulseOps — AI Incident Commander"
@@ -53,6 +55,7 @@ echo ""
 echo "[2/2] Starting PulseOps backend..."
 cd "$BACKEND_DIR"
 STRANDS_DECIDER_URL="http://127.0.0.1:$DECIDER_PORT" \
+ASSESSMENT_PROVIDER="$ASSESSMENT_PROVIDER" \
   $VENV/bin/python -m uvicorn pulseops.api:app --host 0.0.0.0 --port "$PORT" --reload &
 BACKEND_PID=$!
 echo "      PID: $BACKEND_PID"
