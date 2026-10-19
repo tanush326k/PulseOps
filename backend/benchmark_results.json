@@ -1,0 +1,300 @@
+{
+  "timestamp": "2026-10-19T12:03:25Z",
+  "hardware": {
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+    "processor": "",
+    "python_version": "3.12.15",
+    "device": "cpu",
+    "num_logical_cpus": 16
+  },
+  "scenarios_evaluated": 20,
+  "repetitions": 1,
+  "warmup_runs": 1,
+  "approaches": {
+    "decider_2b": {
+      "approach_name": "Strands Decider 2B (Local CPU)",
+      "status": "measured",
+      "status_reason": null,
+      "total_runs": 20,
+      "successful_runs": 20,
+      "failed_runs": 0,
+      "accuracy": 0.65,
+      "latency_stats": {
+        "count": 20,
+        "mean_ms": 9384.66,
+        "median_ms": 6393.84,
+        "p90_ms": 10772.4,
+        "p95_ms": 26362.11,
+        "min_ms": 6041.75,
+        "max_ms": 41808.18,
+        "stddev_ms": 8527.11
+      },
+      "warmup_latency_ms": 61001.47,
+      "timing_notes": "Timing measures steady-state inference latency via localhost HTTP client. Warm-up run is recorded separately and discarded from steady-state statistics.",
+      "total_input_tokens": 71801,
+      "total_output_tokens": 20,
+      "avg_input_tokens": 3590.1,
+      "avg_output_tokens": 1.0,
+      "cost_estimate_per_1k": 0.0,
+      "cost_details": {
+        "model": "StrandsAgents/strands-decider-2B-qwen3.5-v1-2610",
+        "pricing_type": "compute_hosting_only",
+        "per_token_api_fee": 0.0,
+        "observed_avg_input_tokens": 3590.1,
+        "observed_avg_output_tokens": 1.0,
+        "reference_hosting": "AWS EC2 c6i.xlarge ($0.17/hr, $4.08/day)",
+        "notes": "Decider incurs $0 per-token API cost; inference cost is hardware compute allocation."
+      }
+    },
+    "llm_baseline": {
+      "approach_name": "LLM Baseline (Amazon Bedrock Nova Lite / Claude)",
+      "status": "blocked",
+      "status_reason": "Live Bedrock LLM baseline unmeasured: AWS account hit token-per-day quota limit (ThrottlingException: Rate exceeded). To avoid quota exhaustion, no live calls were executed. Theoretical cost projections are calculated using published AWS pricing formulas.",
+      "total_runs": 0,
+      "successful_runs": 0,
+      "failed_runs": 0,
+      "accuracy": null,
+      "latency_stats": null,
+      "warmup_latency_ms": null,
+      "timing_notes": "Blocked due to Bedrock token quota exhaustion. Unmeasured to prevent quota loops.",
+      "total_input_tokens": null,
+      "total_output_tokens": null,
+      "avg_input_tokens": 420.0,
+      "avg_output_tokens": 25.0,
+      "cost_estimate_per_1k": 0.0312,
+      "cost_details": {
+        "model": "us.amazon.nova-lite-v1:0 (Amazon Nova Lite on Bedrock)",
+        "source": "AWS Bedrock Pricing (2025)",
+        "input_price_per_1m": "$0.06 ($0.00006 per 1k)",
+        "output_price_per_1m": "$0.24 ($0.00024 per 1k)",
+        "estimated_input_tokens_per_decision": 420,
+        "estimated_output_tokens_per_decision": 25,
+        "calculated_cost_formula": "(1000 * 420 * $0.06 / 1M) + (1000 * 25 * $0.24 / 1M)",
+        "calculated_cost_per_1k_incidents_nova_lite": 0.0312,
+        "calculated_cost_per_1k_incidents_claude_sonnet": 1.635
+      }
+    }
+  },
+  "raw_runs": [
+    {
+      "scenario_id": "EVAL-001",
+      "approach": "decider_2b",
+      "latency_ms": 41808.18,
+      "action": "inspect_logs",
+      "expected_action": "compare_deployments",
+      "correct": false,
+      "input_tokens": 652,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-002",
+      "approach": "decider_2b",
+      "latency_ms": 25549.16,
+      "action": "compare_deployments",
+      "expected_action": "compare_deployments",
+      "correct": true,
+      "input_tokens": 947,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-003",
+      "approach": "decider_2b",
+      "latency_ms": 9130.54,
+      "action": "compare_deployments",
+      "expected_action": "compare_deployments",
+      "correct": true,
+      "input_tokens": 1275,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-004",
+      "approach": "decider_2b",
+      "latency_ms": 6169.5,
+      "action": "query_metrics",
+      "expected_action": "compare_deployments",
+      "correct": false,
+      "input_tokens": 1580,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-005",
+      "approach": "decider_2b",
+      "latency_ms": 7123.97,
+      "action": "inspect_logs",
+      "expected_action": "inspect_logs",
+      "correct": true,
+      "input_tokens": 1890,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-006",
+      "approach": "decider_2b",
+      "latency_ms": 6827.29,
+      "action": "inspect_logs",
+      "expected_action": "inspect_logs",
+      "correct": true,
+      "input_tokens": 2189,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-007",
+      "approach": "decider_2b",
+      "latency_ms": 6336.98,
+      "action": "inspect_logs",
+      "expected_action": "inspect_logs",
+      "correct": true,
+      "input_tokens": 2482,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-008",
+      "approach": "decider_2b",
+      "latency_ms": 6333.11,
+      "action": "inspect_logs",
+      "expected_action": "inspect_logs",
+      "correct": true,
+      "input_tokens": 2788,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-009",
+      "approach": "decider_2b",
+      "latency_ms": 6825.43,
+      "action": "query_metrics",
+      "expected_action": "query_metrics",
+      "correct": true,
+      "input_tokens": 3112,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-010",
+      "approach": "decider_2b",
+      "latency_ms": 7153.28,
+      "action": "query_metrics",
+      "expected_action": "query_metrics",
+      "correct": true,
+      "input_tokens": 3458,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-011",
+      "approach": "decider_2b",
+      "latency_ms": 6321.86,
+      "action": "query_metrics",
+      "expected_action": "query_metrics",
+      "correct": true,
+      "input_tokens": 3766,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-012",
+      "approach": "decider_2b",
+      "latency_ms": 6041.75,
+      "action": "inspect_logs",
+      "expected_action": "query_metrics",
+      "correct": false,
+      "input_tokens": 4067,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-013",
+      "approach": "decider_2b",
+      "latency_ms": 6467.83,
+      "action": "check_dependencies",
+      "expected_action": "check_dependencies",
+      "correct": true,
+      "input_tokens": 4377,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-014",
+      "approach": "decider_2b",
+      "latency_ms": 6097.23,
+      "action": "inspect_logs",
+      "expected_action": "check_dependencies",
+      "correct": false,
+      "input_tokens": 4679,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-015",
+      "approach": "decider_2b",
+      "latency_ms": 6292.92,
+      "action": "query_metrics",
+      "expected_action": "check_dependencies",
+      "correct": false,
+      "input_tokens": 4991,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-016",
+      "approach": "decider_2b",
+      "latency_ms": 6408.03,
+      "action": "check_dependencies",
+      "expected_action": "check_dependencies",
+      "correct": true,
+      "input_tokens": 5295,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-017",
+      "approach": "decider_2b",
+      "latency_ms": 8020.2,
+      "action": "ask_for_details",
+      "expected_action": "ask_for_details",
+      "correct": true,
+      "input_tokens": 5603,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-018",
+      "approach": "decider_2b",
+      "latency_ms": 6379.65,
+      "action": "ask_for_details",
+      "expected_action": "ask_for_details",
+      "correct": true,
+      "input_tokens": 5904,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-019",
+      "approach": "decider_2b",
+      "latency_ms": 6356.63,
+      "action": "inspect_logs",
+      "expected_action": "ask_for_details",
+      "correct": false,
+      "input_tokens": 6223,
+      "output_tokens": 1,
+      "error": null
+    },
+    {
+      "scenario_id": "EVAL-020",
+      "approach": "decider_2b",
+      "latency_ms": 6049.67,
+      "action": "inspect_logs",
+      "expected_action": "ask_for_details",
+      "correct": false,
+      "input_tokens": 6523,
+      "output_tokens": 1,
+      "error": null
+    }
+  ]
+}
