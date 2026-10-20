@@ -140,7 +140,11 @@ DEMO_INCIDENTS: list[dict[str, Any]] = [
 
 
 class IncidentRequest(BaseModel):
-    incident_id: str = Field(..., description="Unique incident identifier, e.g. INC-001")
+    incident_id: str = Field(
+        ...,
+        max_length=64,
+        description="Unique incident identifier, e.g. INC-001",
+    )
 
 
 class DeciderResult(BaseModel):
@@ -175,9 +179,27 @@ def create_app() -> FastAPI:
         version="1.0.0",
     )
 
+    cors_origins_env = os.environ.get("PULSEOPS_CORS_ORIGINS", "").strip()
+    if cors_origins_env == "*":
+        allow_origins = ["*"]
+        allow_origin_regex = None
+    elif cors_origins_env:
+        allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+        allow_origin_regex = None
+    else:
+        allow_origins = [
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+        allow_origin_regex = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allow_origins,
+        allow_origin_regex=allow_origin_regex,
+        allow_credentials=False,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )

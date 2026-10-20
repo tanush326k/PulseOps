@@ -184,6 +184,54 @@ class TestRunIncidentEndpoint(unittest.TestCase):
         for key in ("assessment", "model", "available", "provider", "status", "label"):
             self.assertIn(key, a, f"Key {key!r} missing from assessment section")
 
+    def test_incident_id_over_max_length_rejected(self):
+        """Security: oversized incident_id strings must be rejected with 422."""
+        oversized_id = "A" * 65
+        resp = self.client.post("/api/run-incident", json={"incident_id": oversized_id})
+        self.assertEqual(resp.status_code, 422)
+
+
+class TestSecurityAndCORS(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app()
+        self.client = TestClient(self.app)
+
+    def test_cors_allows_localhost_loopback(self):
+        """CORS must permit localhost requests."""
+        resp = self.client.options(
+            "/api/health",
+            headers={
+                "Origin": "http://localhost:8080",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        self.assertEqual(resp.headers.get("access-control-allow-origin"), "http://localhost:8080")
+
+    def test_cors_allows_127_0_0_1_origin(self):
+        """CORS must permit 127.0.0.1 loopback requests on any port."""
+        resp = self.client.options(
+            "/api/health",
+            headers={
+                "Origin": "http://127.0.0.1:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        self.assertEqual(resp.headers.get("access-control-allow-origin"), "http://127.0.0.1:3000")
+
+    def test_cors_blocks_untrusted_origins(self):
+        """CORS must not allow external/untrusted domains by default."""
+        resp = self.client.options(
+            "/api/health",
+            headers={
+                "Origin": "https://malicious-site.example.com",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        self.assertNotEqual(
+            resp.headers.get("access-control-allow-origin"),
+            "https://malicious-site.example.com",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,205 +2,249 @@
 
 > **Strands Decider 2B Hackathon** · Tags: `#tool-selection` `#strands-decider-2b`
 
-PulseOps uses **Strands Decider 2B** to make typed, calibrated decisions during production incident triage, then routes execution to the corresponding diagnostic tool. An **incident assessment** is then generated — by default from a clearly-labelled mock (self-contained, no credentials needed), or via **Amazon Bedrock** when configured.
+PulseOps uses **Strands Decider 2B** to make typed, calibrated decisions during production incident triage, then routes execution to the corresponding diagnostic tool. An **incident assessment** is then generated — by default from a clearly-labelled mock (self-contained, zero cloud credentials needed), or via **Amazon Bedrock** when configured.
 
-The decision is **genuine**: the model's `choice` output directly controls which tool runs next — it is not cosmetic.
-
----
-
-## Demo (< 3 min)
-
-1. Start the servers with `./backend/run.sh`
-2. Open `http://localhost:8080` in a browser
-3. Select one of the five pre-loaded incidents
-4. Click **Run Incident Analysis**
-5. Watch Decider pick an action → simulated evidence appears → incident assessment generated
-   (mock by default; set `ASSESSMENT_PROVIDER=bedrock` in `.env` for live Bedrock)
+The decision is **genuine**: the model's `choice` output directly controls which diagnostic tool runs next — it is not cosmetic.
 
 ---
 
-## Architecture
+## Quick Start (< 3 min)
 
+### On Windows (PowerShell)
+```powershell
+# From the repository root in PowerShell:
+.\run.ps1
 ```
-┌──────────────────────── WSL2 Ubuntu ────────────────────────────────┐
-│                                                                       │
-│  Strands Decider 2B (port 8099)   ←── POST /v1/systemone             │
-│       ↓  typed choice answer                                          │
-│  PulseOps Backend (FastAPI, port 8080)                                │
-│       ↓  validate → route → tool → evidence → Bedrock                │
-│       ↓  JSON response                                                │
-└───────────────────────────────────────────────────────────────────────┘
-         ↑↓ fetch()
-┌─────────── Browser ──────────────────┐
-│  PulseOps Web UI (static HTML/JS)   │
-└──────────────────────────────────────┘
-```
+*(Or directly via WSL: `wsl bash backend/run.sh`)*
 
-**Decision routing** — [`backend/pulseops/decision.py`](backend/pulseops/decision.py):
-- Builds a `ChoiceQuestion` with 5 named options.
-- Calls `Decider.ask()` → `ChoiceAnswer.choice` is the action name.
-- `route(action)` indexes a `dict[str, Callable]` — unknown string → `InvalidDecisionError`.
-
-**Graceful degradation**:
-- Decider down → HTTP 503 with clear error.
-- Bedrock credentials absent → labelled placeholder text; rest of demo works.
-
----
-
-## Project structure
-
-```
-PulseOps/
-├── backend/
-│   ├── pulseops/
-│   │   ├── decider_client.py   ← HTTP client for /v1/systemone (no external deps)
-│   │   ├── decision.py         ← ChoiceQuestion, validator, routing table
-│   │   ├── tools.py            ← 5 simulated diagnostic tools (labelled [SIMULATED])
-│   │   ├── bedrock_agent.py    ← strands-agents wrapper (graceful degradation)
-│   │   └── api.py              ← FastAPI app
-│   ├── tests/
-│   │   ├── test_routing.py     ← 13 tests: routing, invalid decision, 5 scenarios
-│   │   ├── test_tools.py       ← 13 tests: each tool, determinism
-│   │   ├── test_api.py         ← 14 tests: health, incidents, pipeline, error cases
-│   │   └── test_assessment.py  ← 32 tests: mock, Bedrock success/failure, invalid provider
-│   ├── requirements.txt
-│   └── run.sh                  ← starts Decider + backend
-├── frontend/
-│   ├── index.html
-│   ├── style.css               ← dark glassmorphism design
-│   └── app.js
-├── .env.example                ← copy to .env and fill credentials
-├── .gitignore
-└── LICENSE                     ← Apache-2.0
-```
-
----
-
-## Setup
-
-### Prerequisites
-
-- **WSL2** with Ubuntu and Python 3.12
-- `strands-decider` repo cloned and venv at `~/strands-decider/.venv`
-- Checkpoint `StrandsAgents/strands-decider-2B-qwen3.5-v1-2610` downloaded
-
-### 1. Install additional dependencies
-
-```bash
-# Bootstrap pip if needed (first time only)
-~/strands-decider/.venv/bin/python -m ensurepip
-
-~/strands-decider/.venv/bin/python -m pip install \
-  strands-agents boto3 pytest httpx
-```
-
-### 2. Configure credentials (for live Bedrock)
-
-```bash
-cp .env.example .env
-# Edit .env and fill in:
-#   AWS_ACCESS_KEY_ID
-#   AWS_SECRET_ACCESS_KEY
-#   AWS_DEFAULT_REGION  (e.g. us-east-1)
-#   BEDROCK_MODEL_ID    (e.g. us.amazon.nova-lite-v1:0)
-```
-
-Without credentials, PulseOps shows a clearly-labelled placeholder and everything else still works.
-
-### 3. Run tests
-
-```bash
-cd backend
-~/strands-decider/.venv/bin/python -m pytest tests/ -v
-# Expected: 72 passed
-```
-
-### 4. Assessment provider
-
-The default `ASSESSMENT_PROVIDER=mock` requires no credentials. To enable live Bedrock:
-
-```bash
-cp .env.example .env
-# Uncomment and fill in AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
-# Change ASSESSMENT_PROVIDER=bedrock
-```
-
-Without Bedrock credentials, PulseOps shows a clearly-labelled `MOCK — NOT GENERATED BY BEDROCK` assessment and everything else still works.
-
-### 5. Start the demo
-
+### On Linux / WSL2 (Ubuntu)
 ```bash
 chmod +x backend/run.sh
 ./backend/run.sh
 ```
 
-Open `http://localhost:8080`.
-
-Without credentials the demo works fully in mock-assessment mode. The status bar shows the active assessment provider.
+### Try the Demo
+1. Open **`http://localhost:8080`** in your browser.
+2. Select one of the five pre-loaded incidents (e.g. `INC-001` Deployment Spike).
+3. Click **Run Incident Analysis**.
+4. Watch Strands Decider 2B select the optimal diagnostic action with calibrated probabilities.
+5. Review the simulated evidence and incident assessment (mock by default; live Bedrock when opted-in).
 
 ---
 
-## Decision pattern (reusable)
+## Architecture & Data Flow
 
-The typed decision pattern in [`decision.py`](backend/pulseops/decision.py) is documented for reuse:
+```
+┌──────────────────────── WSL2 Ubuntu / Local Host ───────────────────┐
+│                                                                     │
+│  Strands Decider 2B (port 8099)   ←── POST /v1/systemone            │
+│       ↓  typed choice answer                                        │
+│  PulseOps Backend (FastAPI, port 8080, loopback 127.0.0.1)          │
+│       ↓  validate → route → tool → evidence → Bedrock/Mock          │
+│       ↓  JSON response                                              │
+└─────────────────────────────────────────────────────────────────────┘
+         ↑↓ fetch() [Same Origin / Localhost CORS]
+┌─────────── Browser ─────────────────────────────────────────────────┐
+│  PulseOps Web UI (Glassmorphic Dark Theme)                          │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Decision routing** — [`backend/pulseops/decision.py`](backend/pulseops/decision.py):
+- Builds a `ChoiceQuestion` with 5 named options.
+- Calls `Decider.ask()` → `ChoiceAnswer.choice` is the action name.
+- `resolve_decision(answer)` applies confidence validation and fallback handling.
+- `route(action)` indexes a `dict[str, Callable]` — unknown string → `InvalidDecisionError` (HTTP 422).
+
+---
+
+## Diagnostic Tools (Simulated)
+
+PulseOps defines 5 specialized diagnostic tools in [`backend/pulseops/tools.py`](backend/pulseops/tools.py). All tools are deterministic, self-contained, and require **zero live cloud credentials or production infrastructure access**:
+
+| Tool Action | Incident Trigger Pattern | Simulated Evidence Output |
+|---|---|---|
+| `compare_deployments` | Spike immediately follows a new image rollout | Diff of image tags (`v2.14.1` → `v2.15.0`), config maps, halved connection pool, and `/v2` endpoint change. |
+| `inspect_logs` | OOM loops, crash loops, or specific stack traces | Tail of container logs with connection pool exhaustion and goroutine leak detection. |
+| `check_dependencies` | Upstream/downstream 503 or latency degradation | Dependency probes showing `payments-api /v2` failing while `/v1`, auth, and postgres remain healthy. |
+| `query_metrics` | Resource exhaustion or unexplained latency jumps | 15-minute telemetry snapshot showing CPU, memory, error rate (68%), and P99 latency (31s). |
+| `ask_for_details` | Low confidence or ambiguous, uncorroborated signals | Structured clarification questionnaire for on-call engineer before autonomous action. |
+
+Every tool result returns `source: "simulated"` and prefixes output with `[SIMULATED]` to guarantee clear distinction from live systems.
+
+---
+
+## Assessment Provider & Status Transparency
+
+The incident assessment panel provides complete transparency into model provenance. Reviewers will never see ambiguous or misleading status labels:
+
+| Assessment Status | Badge Display | Meaning & Cause |
+|---|---|---|
+| **Mock (Default)** | `📋 MOCK — NOT GENERATED BY BEDROCK` | Default self-contained mode (`ASSESSMENT_PROVIDER=mock`). Requires no AWS account, no IAM credentials, and zero external network calls. |
+| **Live Bedrock** | `🤖 BEDROCK — <model-id>` | Live assessment generated via Strands Agents SDK calling Amazon Bedrock (`ASSESSMENT_PROVIDER=bedrock`). |
+| **Unavailable** | `⚠ BEDROCK UNAVAILABLE — <CATEGORY>` | Bedrock opted-in but degraded gracefully. Sub-categories: `MISSING CREDENTIALS`, `ACCESS DENIED`, `THROTTLED` (daily quota exceeded; fails fast without retrying), `TIMEOUT`, or `SDK MISSING`. |
+| **Config Error** | `⚠ ASSESSMENT CONFIGURATION ERROR` | Invalid or unrecognized `ASSESSMENT_PROVIDER` environment variable value. |
+
+---
+
+## Prerequisites & Setup
+
+### Environment
+- **WSL2** with Ubuntu 22.04+ (or native Linux) and **Python 3.12**
+- `strands-decider` repository cloned with virtualenv at `~/strands-decider/.venv`
+- Model checkpoint `StrandsAgents/strands-decider-2B-qwen3.5-v1-2610` downloaded
+
+### 1. Install Dependencies
+```bash
+# Bootstrap pip if needed
+~/strands-decider/.venv/bin/python -m ensurepip
+
+# Install runtime and test packages
+~/strands-decider/.venv/bin/python -m pip install \
+  strands-agents boto3 pytest httpx uvicorn fastapi pydantic
+```
+
+### 2. Configure Environment (Optional)
+```bash
+cp .env.example .env
+# Default: ASSESSMENT_PROVIDER=mock (no credentials required)
+# To enable Bedrock: set ASSESSMENT_PROVIDER=bedrock and fill AWS credentials
+```
+
+### 3. Verify Offline Test Suite
+```bash
+cd backend
+~/strands-decider/.venv/bin/python -m pytest tests/ -v
+# Expected: 113 passed, 15 subtests passed in ~3s
+```
+
+---
+
+## Running the Evaluation & Benchmark
+
+PulseOps includes evaluation and benchmarking suites to verify Strands Decider 2B accuracy and performance:
+
+### 1. Evaluate Decision Accuracy (20 Scenarios)
+With Decider running on port 8099:
+```bash
+cd backend
+~/strands-decider/.venv/bin/python evaluate_decider.py --threshold 0.0
+```
+- Tests all 20 curated incident scenarios across 5 diagnostic actions.
+- Outputs accuracy, per-class precision/recall/F1, and a complete confusion matrix.
+- Saves structured report to `backend/eval_results.json`.
+
+### 2. Benchmark Latency and Cost
+```bash
+cd backend
+~/strands-decider/.venv/bin/python benchmark_comparison.py --repetitions 1
+```
+- Measures warm-up and steady-state decision latency (mean, median, P90, P95).
+- Generates side-by-side cost and latency comparison with generative LLM baselines (Nova Lite, Claude 3.5 Sonnet).
+- Full methodology documented in [`backend/docs/benchmark_methodology.md`](backend/docs/benchmark_methodology.md).
+
+---
+
+## Deployment Feasibility Assessment
+
+During Phase 5, we evaluated deploying PulseOps to a public cloud environment (e.g., Render, Railway, Fly.io, or AWS EC2/ECS) versus providing a local reviewer launch path:
+
+1. **CPU Inference Latency**: Strands Decider 2B requires ~20.9s per forward pass on CPU. Concurrent public web requests would queue, contend, and trigger HTTP 504 gateway timeouts.
+2. **Memory Footprint**: Loading the 2B model weights and forward buffers requires ~5 GB RAM, immediately crashing free/low-tier container hosts (256MB–1GB limits) with OOM kills.
+3. **Daemon Co-hosting & Security**: Upstream `strands-decider serve` runs on port 8099 without an authentication layer. Exposing it publicly creates an open denial-of-service vector.
+4. **Bedrock Quotas & Key Security**: The hackathon AWS account experienced daily token rate limits (`ThrottlingException`). Exposing a live Bedrock endpoint publicly would exhaust remaining quotas instantly and expose credentials.
+
+**Decision**: A public deployment is **not justified**. Providing a reliable, reproducible local execution path (Windows + WSL2 launcher scripts, mock default, instant offline test suite) ensures the best and most trustworthy reviewer experience.
+
+---
+
+## Known Limitations
+
+- **CPU Decision Latency**: Decider 2B running locally on CPU takes ~20–25 seconds per inference pass. On GPU-accelerated infrastructure, this drops to sub-100ms.
+- **Unmeasured Bedrock Baseline**: Generative LLM baseline latency and accuracy were blocked by AWS Bedrock daily token quotas. In accordance with honest evaluation practices, baseline figures are marked as `blocked / unmeasured` rather than fabricated.
+- **Single-User Local Architecture**: Designed for local incident commander triage and pair debugging.
+
+---
+
+## Security & Operational Hardening
+
+- **Loopback Binding**: `run.sh` and `start_backend.sh` default `HOST=127.0.0.1`. The server does not listen on `0.0.0.0` unless explicitly requested, preventing accidental local-network exposure.
+- **CORS Protection**: API CORS middleware is restricted to `localhost` and `127.0.0.1` loopback origins via regex; untrusted external domains are blocked.
+- **Payload Validation**: Pydantic models enforce string length bounds (`max_length=64` on incident IDs) and reject oversized requests (HTTP 422).
+- **Credential Sanitization**: `_sanitize_error_message()` actively strips AWS access keys (`AKIA***`), secret keys, and passwords from error messages before responses or logs are formatted.
+- **Fail-Fast Error Handling**: Throttled Bedrock requests fail fast without futile retries that burn tokens.
+
+---
+
+## Decision Pattern (Reusable Example)
+
+The typed decision pattern in [`decision.py`](backend/pulseops/decision.py) is directly reusable:
 
 ```python
 from pulseops.decider_client import Decider
-from pulseops.decision import TRIAGE_QUESTION, QUESTION_KEY, route, build_state
+from pulseops.decision import TRIAGE_QUESTION, QUESTION_KEY, resolve_decision, route, build_state
 
 decider = Decider()  # connects to http://127.0.0.1:8099
 
-# 1. Build state from your incident/task data
+# 1. Build state from incident data
 state = build_state(incident_dict)
 
 # 2. Ask Decider for a typed choice
 answers = decider.ask(state, {QUESTION_KEY: TRIAGE_QUESTION})
 
-# 3. Extract the chosen action (validated, fail-safe)
-action = answers[QUESTION_KEY]["choice"]          # e.g. "compare_deployments"
-probs  = answers[QUESTION_KEY]["probabilities"]   # per-option scores
+# 3. Resolve decision (validates action, applies confidence fallback if needed)
+decision = resolve_decision(answers[QUESTION_KEY], confidence_threshold=0.0)
+print(f"Chosen action: {decision.action} ({decision.confidence * 100:.1f}%)")
 
-# 4. Route to the matching tool
-tool_fn = route(action)   # raises InvalidDecisionError for unknown actions
+# 4. Route to matching diagnostic tool
+tool_fn = route(decision.action)
 result  = tool_fn(incident_dict)
 ```
 
-To adapt for a different use case: replace `TRIAGE_OPTIONS` in `decision.py` with your own option dict, and update the routing table accordingly.
-
 ---
 
-## API reference
+## API Reference
 
 ### `GET /api/health`
-Returns backend status and Decider server reachability.
+Returns backend status, Decider server reachability, active assessment provider, and known diagnostic actions.
 
 ### `GET /api/incidents`
-Returns the list of demo incidents.
+Returns the list of 5 predefined demo incidents.
 
 ### `POST /api/run-incident`
 ```json
 { "incident_id": "INC-001" }
 ```
-Runs the full pipeline and returns:
+Runs the end-to-end pipeline and returns:
 ```json
 {
-  "incident": { ... },
-  "decider": { "action": "compare_deployments", "probabilities": {...}, "confidence": 0.7 },
-  "tool_result": { "action": "...", "source": "simulated", "evidence": "...", "key_finding": "..." },
+  "incident": { "id": "INC-001", "severity": "P1", "service": "checkout-api", ... },
+  "decider": {
+    "action": "compare_deployments",
+    "probabilities": { "compare_deployments": 0.65, "inspect_logs": 0.15, ... },
+    "confidence": 0.65,
+    "fallback_applied": false,
+    "latency_ms": 20850.2
+  },
+  "tool_result": {
+    "action": "compare_deployments",
+    "source": "simulated",
+    "evidence": "[SIMULATED] Deployment diff for checkout-api...",
+    "key_finding": "v2.15.0 deployed 3 min before incident: PAYMENT_URL changed to /v2, POOL_SIZE halved."
+  },
   "assessment": {
-    "assessment": "SITUATION\n…\nEVIDENCE\n…\nNEXT STEPS\n…",
+    "assessment": "MOCK ASSESSMENT — NOT GENERATED BY BEDROCK\n\nSITUATION\n...",
     "model": null,
     "available": false,
     "provider": "mock",
     "status": "mock",
     "label": "MOCK — NOT GENERATED BY BEDROCK"
   },
-  "total_latency_ms": 1240.5
+  "total_latency_ms": 20855.4
 }
 ```
 
 ---
 
-## Licence
+## License
 
 Apache-2.0 — see [LICENSE](LICENSE).

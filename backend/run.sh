@@ -22,6 +22,7 @@ fi
 CHECKPOINT=${CHECKPOINT:-"StrandsAgents/strands-decider-2B-qwen3.5-v1-2610"}
 DECIDER_PORT=${DECIDER_PORT:-8099}
 PORT=${PORT:-8080}
+HOST=${HOST:-"127.0.0.1"}
 ASSESSMENT_PROVIDER=${ASSESSMENT_PROVIDER:-"mock"}
 VENV=~/strands-decider/.venv
 
@@ -30,7 +31,7 @@ echo " PulseOps — AI Incident Commander"
 echo "===================================================="
 echo " Checkpoint : $CHECKPOINT"
 echo " Decider    : http://127.0.0.1:$DECIDER_PORT"
-echo " Backend    : http://127.0.0.1:$PORT"
+echo " Backend    : http://$HOST:$PORT"
 echo "===================================================="
 
 # Start Strands Decider server in background
@@ -42,13 +43,21 @@ echo "      PID: $DECIDER_PID"
 
 # Wait for Decider to be ready
 echo "      Waiting for Decider to be ready..."
+DECIDER_READY=0
 for i in $(seq 1 60); do
   if curl -sf "http://127.0.0.1:$DECIDER_PORT/health" > /dev/null 2>&1; then
     echo "      Decider ready after ${i}s"
+    DECIDER_READY=1
     break
   fi
   sleep 1
 done
+
+if [ "$DECIDER_READY" -eq 0 ]; then
+  echo "      [WARN] Decider did not respond within 60s."
+  echo "             It may still be loading model weights into memory."
+  echo "             The backend will start and report Decider status on /api/health."
+fi
 
 # Start FastAPI backend
 echo ""
@@ -56,7 +65,7 @@ echo "[2/2] Starting PulseOps backend..."
 cd "$BACKEND_DIR"
 STRANDS_DECIDER_URL="http://127.0.0.1:$DECIDER_PORT" \
 ASSESSMENT_PROVIDER="$ASSESSMENT_PROVIDER" \
-  $VENV/bin/python -m uvicorn pulseops.api:app --host 0.0.0.0 --port "$PORT" --reload &
+  $VENV/bin/python -m uvicorn pulseops.api:app --host "$HOST" --port "$PORT" --reload &
 BACKEND_PID=$!
 echo "      PID: $BACKEND_PID"
 
